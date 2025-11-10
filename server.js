@@ -1,7 +1,13 @@
 const express = require("express");
 const cors = require("cors");
+const { Pool } = require("pg"); 
 
 const app = express();
+
+const pool = new Pool({
+connectionString: process.env.DATABASE_URL,
+ssl: { rejectUnauthorized: false }
+});
 
 app.use(cors());
 app.use(express.json());
@@ -14,6 +20,16 @@ app.get("/health", (req, res) => {
 // Root route
 app.get("/", (req, res) => {
   res.send("Merchenary backend is live ✅");
+});
+
+app.get("/db-test", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT NOW()");
+    res.json({ ok: true, now: result.rows[0].now });
+  } catch (err) {
+    console.error("DB test error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
